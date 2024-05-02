@@ -185,7 +185,7 @@ class BuildTagPanel(PanelWidget):
 		l.setContentsMargins(0,0,0,0)
 		l.setSpacing(3)
 		for tag_id in self.tag.subtag_ids:
-			tw = TagWidget(self.lib, self.lib.get_tag(tag_id), False, True)
+			tw = TagWidget(self.lib, self.lib.get_tag(tag_id), False, True, False)
 			tw.on_remove.connect(lambda checked=False, t=tag_id: self.remove_subtag_callback(t))
 			l.addWidget(tw)
 		self.scroll_layout.addWidget(c)

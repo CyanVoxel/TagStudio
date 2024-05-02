@@ -8,7 +8,7 @@ import math
 import typing
 
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QPushButton
+from PySide6.QtWidgets import QPushButton, QMessageBox, QApplication
 
 from src.core.library import Library, Tag
 from src.qt.flowlayout import FlowLayout
@@ -71,36 +71,43 @@ class TagBoxWidget(FieldWidget):
 
 	def set_item(self, item):
 		self.item = item
-
-	def set_tags(self, tags:list[int]):
-		logging.info(f'[TAG BOX WIDGET] SET TAGS: T:{tags} for E:{self.item.id}')
+	
+	def update_tags(self):
 		is_recycled = False
+		
 		if self.base_layout.itemAt(0):
 			# logging.info(type(self.base_layout.itemAt(0).widget()))
+			is_recycled = True
 			while self.base_layout.itemAt(0) and self.base_layout.itemAt(1):
 				# logging.info(f"I'm deleting { self.base_layout.itemAt(0).widget()}")
 				self.base_layout.takeAt(0).widget().deleteLater()
-			is_recycled = True
-		for tag in tags:
+		
+		for tag_id in self.tags:
 			# TODO: Remove space from the special search here (tag_id:x) once that system is finalized.
 			# tw = TagWidget(self.lib, self.lib.get_tag(tag), True, True, 
 			# 							on_remove_callback=lambda checked=False, t=tag: (self.lib.get_entry(self.item.id).remove_tag(self.lib, t, self.field_index), self.updated.emit()), 
 			# 							on_click_callback=lambda checked=False, q=f'tag_id: {tag}': (self.driver.main_window.searchField.setText(q), self.driver.filter_items(q)),
 			# 							on_edit_callback=lambda checked=False, t=tag: (self.edit_tag(t))
 			# 							)
-			tw = TagWidget(self.lib, self.lib.get_tag(tag), True, True)
-			tw.on_click.connect(lambda checked=False, q=f'tag_id: {tag}': (self.driver.main_window.searchField.setText(q), self.driver.filter_items(q)))
-			tw.on_remove.connect(lambda checked=False, t=tag: (self.remove_tag(t)))
-			tw.on_edit.connect(lambda checked=False, t=tag: (self.edit_tag(t)))
+			tag_deletable = tag_id not in [0, 1] # [0, 1] should probably be extracted as a constant during refactor
+			tw = TagWidget(self.lib, self.lib.get_tag(tag_id), True, True, tag_deletable)
+			tw.on_click.connect(lambda checked=False, q=f'tag_id: {tag_id}': (self.driver.main_window.searchField.setText(q), self.driver.filter_items(q)))
+			tw.on_remove.connect(lambda checked=False, t=tag_id: (self.remove_tag(t)))
+			tw.on_edit.connect(lambda checked=False, t=tag_id: (self.edit_tag(t)))
+			tw.on_delete.connect(lambda checked=False, t=tag_id: (self.delete_tag(t)))
 			self.base_layout.addWidget(tw)
-		self.tags = tags
-
+		
 		# Move or add the '+' button.
 		if is_recycled:
 			self.base_layout.addWidget(self.base_layout.takeAt(0).widget())
 		else:
 			self.base_layout.addWidget(self.add_button)
 	
+	def set_tags(self, tags:list[int]):
+		logging.info(f'[TAG BOX WIDGET] SET TAGS: T:{tags} for E:{self.item.id}')
+		self.tags = tags
+		self.update_tags()
+		
 		# Handles an edge case where there are no more tags and the '+' button
 		# doesn't move all the way to the left.
 		if self.base_layout.itemAt(0) and not self.base_layout.itemAt(1):
@@ -120,6 +127,24 @@ class TagBoxWidget(FieldWidget):
 		self.edit_modal.saved.connect(lambda: self.lib.update_tag(btp.build_tag()))
 		# panel.tag_updated.connect(lambda tag: self.lib.update_tag(tag))
 		self.edit_modal.show()
+	
+	
+	def delete_tag(self, tag_id:int):
+		def show_delete_prompt() -> bool:
+			result = QMessageBox.question(self, "Delete Tag", f"Are you sure you want to delete Tag {tag.name}?",
+								 QMessageBox.Yes | QMessageBox.No)
+			
+			return result == QMessageBox.Yes
+		
+		tag = self.lib.get_tag(tag_id)
+		shift_held = Qt.KeyboardModifier.ShiftModifier in QApplication.keyboardModifiers()
+		
+		if shift_held or show_delete_prompt():
+			self.lib.remove_tag(tag_id)
+			self.update_tags()
+			
+			if not shift_held:
+				QMessageBox.information(self, "Delete Tag", "Tag deleted.")
 
 
 	def add_tag_callback(self, tag_id):

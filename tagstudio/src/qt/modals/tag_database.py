@@ -4,7 +4,7 @@
 
 
 from PySide6.QtCore import Signal, Qt, QSize
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QScrollArea, QFrame
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QScrollArea, QFrame, QMessageBox, QApplication
 
 from src.core.library import Library
 from src.qt.widgets import PanelWidget, PanelModal, TagWidget
@@ -92,8 +92,10 @@ class TagDatabasePanel(PanelWidget):
 				l = QHBoxLayout(c)
 				l.setContentsMargins(0,0,0,0)
 				l.setSpacing(3)
-				tw = TagWidget(self.lib, self.lib.get_tag(tag_id), True, False)
+				tag_deletable = tag_id not in [0, 1] # [0, 1] should probably be extracted as a constant during refactor
+				tw = TagWidget(self.lib, self.lib.get_tag(tag_id), True, False, tag_deletable)
 				tw.on_edit.connect(lambda checked=False, t=self.lib.get_tag(tag_id): (self.edit_tag(t.id)))
+				tw.on_delete.connect(lambda checked=False, t=self.lib.get_tag(tag_id): (self.delete_tag(t.id)))
 				l.addWidget(tw)
 				self.scroll_layout.addWidget(c)
 		else:
@@ -106,8 +108,10 @@ class TagDatabasePanel(PanelWidget):
 				l = QHBoxLayout(c)
 				l.setContentsMargins(0,0,0,0)
 				l.setSpacing(3)
-				tw = TagWidget(self.lib, tag, True, False)
+				tag_deletable = tag_id not in [0, 1] # [0, 1] should probably be extracted as a constant during refactor
+				tw = TagWidget(self.lib, tag, True, False, tag_deletable)
 				tw.on_edit.connect(lambda checked=False, t=tag: (self.edit_tag(t.id)))
+				tw.on_delete.connect(lambda checked=False, t=tag: (self.delete_tag(t.id)))
 				l.addWidget(tw)
 				self.scroll_layout.addWidget(c)
 
@@ -127,6 +131,23 @@ class TagDatabasePanel(PanelWidget):
 		self.edit_modal.saved.connect(lambda: self.edit_tag_callback(btp))
 		# panel.tag_updated.connect(lambda tag: self.lib.update_tag(tag))
 		self.edit_modal.show()
+	
+	def delete_tag(self, tag_id:int):
+		def show_delete_prompt() -> bool:
+			result = QMessageBox.question(self, "Delete Tag", f"Are you sure you want to delete Tag {tag.name}?",
+								 QMessageBox.Yes | QMessageBox.No)
+			
+			return result == QMessageBox.Yes
+		
+		tag = self.lib.get_tag(tag_id)
+		shift_held = Qt.KeyboardModifier.ShiftModifier in QApplication.keyboardModifiers()
+		
+		if shift_held or show_delete_prompt():
+			self.lib.remove_tag(tag_id)
+			self.update_tags(self.search_field.text())
+			
+			if not shift_held:
+				QMessageBox.information(self, "Delete Tag", "Tag deleted.")
 	
 	def edit_tag_callback(self, btp:BuildTagPanel):
 		self.lib.update_tag(btp.build_tag())

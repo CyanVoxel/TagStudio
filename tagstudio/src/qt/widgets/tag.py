@@ -29,8 +29,9 @@ class TagWidget(QWidget):
 	on_remove = Signal()
 	on_click = Signal()
 	on_edit = Signal()
+	on_delete = Signal()
 
-	def __init__(self, library:Library, tag:Tag, has_edit:bool, has_remove:bool, on_remove_callback:FunctionType=None, on_click_callback:FunctionType=None, on_edit_callback:FunctionType=None) -> None:
+	def __init__(self, library:Library, tag:Tag, has_edit:bool, has_remove:bool, has_delete:bool, on_remove_callback:FunctionType=None, on_click_callback:FunctionType=None, on_edit_callback:FunctionType=None) -> None:
 		super().__init__()
 		self.lib = library
 		self.tag = tag
@@ -66,6 +67,11 @@ class TagWidget(QWidget):
 		self.bg_button.addAction(search_for_tag_action)
 		add_to_search_action = QAction('Add to Search', self)
 		self.bg_button.addAction(add_to_search_action)
+		
+		if has_delete:
+			delete_action = QAction('Delete Tag', self)
+			delete_action.triggered.connect(self.on_delete.emit)
+			self.bg_button.addAction(delete_action)
 
 		self.inner_layout = QHBoxLayout()
 		self.inner_layout.setObjectName('innerLayout')

@@ -100,7 +100,7 @@ class TagSearchPanel(PanelWidget):
 			l = QHBoxLayout(c)
 			l.setContentsMargins(0, 0, 0, 0)
 			l.setSpacing(3)
-			tw = TagWidget(self.lib, self.lib.get_tag(tag_id), False, False)
+			tw = TagWidget(self.lib, self.lib.get_tag(tag_id), False, False, False)
 			ab = QPushButton()
 			ab.setMinimumSize(23, 23)
 			ab.setMaximumSize(23, 23)
