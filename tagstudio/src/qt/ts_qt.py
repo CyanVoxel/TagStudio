@@ -613,6 +613,7 @@ class QtDriver(QObject):
 
     def shutdown(self):
         """Save Library on Application Exit"""
+        self.lib.observer.stop()
         if self.lib.library_dir:
             self.save_library()
             self.settings.setValue(SettingItems.LAST_LIBRARY, self.lib.library_dir)
@@ -1237,14 +1238,14 @@ class QtDriver(QObject):
                             lambda checked=False, entry=entry: self.select_item(
                                 ItemType.ENTRY,
                                 entry.id,
-                                append=True
-                                if QGuiApplication.keyboardModifiers()
-                                == Qt.KeyboardModifier.ControlModifier
-                                else False,
-                                bridge=True
-                                if QGuiApplication.keyboardModifiers()
-                                == Qt.KeyboardModifier.ShiftModifier
-                                else False,
+                                append=(
+                                    QGuiApplication.keyboardModifiers()
+                                    == Qt.KeyboardModifier.ControlModifier
+                                ),
+                                bridge=(
+                                    QGuiApplication.keyboardModifiers()
+                                    == Qt.KeyboardModifier.ShiftModifier
+                                ),
                             )
                         )
                     )
@@ -1444,6 +1445,7 @@ class QtDriver(QObject):
         self.selected.clear()
         self.preview_panel.update_widgets()
         self.filter_items()
+        self.lib.refresh_on_changes(self.filter_items)
 
     def create_collage(self) -> None:
         """Generates and saves an image collage based on Library Entries."""
@@ -1498,19 +1500,13 @@ class QtDriver(QObject):
             # 	], prompt='', required=True)
             full_thumb_size = 0
 
-        thumb_size: int = (
-            32
-            if (full_thumb_size == 0)
-            else 64
-            if (full_thumb_size == 1)
-            else 128
-            if (full_thumb_size == 2)
-            else 256
-            if (full_thumb_size == 3)
-            else 512
-            if (full_thumb_size == 4)
-            else 32
-        )
+        size_options = {
+            1: 64,
+            2: 128,
+            3: 256,
+            4: 512,
+        }
+        thumb_size = size_options.get(full_thumb_size, 32)
         thumb_size = 16
 
         # if len(com) > 1 and com[1] == 'keep-aspect':
