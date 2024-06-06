@@ -182,11 +182,10 @@ _Skip these steps if launching from the .sh script on Linux/macOS._
 - Windows w/Command Prompt: `.venv\Scripts\activate.bat`
 - Linux/macOS: `source .venv/bin/activate`
 
-3. Install the required packages:  
+3. Install the required packages:
 
 - required to run the app: `pip install -r requirements.txt`
 - required to develop: `pip install -r requirements-dev.txt`
-
 
 To run all the tests use `python -m pytest tests/` from the `tagstudio` folder.
 
@@ -213,9 +212,12 @@ _Learn more about setting up a virtual environment [here](https://docs.python.or
 
 ### What State Is the Project Currently In?
 
-As of writing (Alpha v9.2.0) the project is in a useable state, however it lacks proper testing and quality of life features.
+As of writing (Alpha v9.2.1) the project is in a useable state, however it lacks proper testing and quality of life features.
 
 ### What Features Are You Planning on Adding?
+
+> [!NOTE]
+> **_See [Planned Features](/doc/planned_features.md) documentation._**
 
 Of the several features I have planned for the project, these are broken up into “priority” features and “future” features. Priority features were originally intended for the first public release, however are currently absent from the Alpha v9.x.x builds.
 

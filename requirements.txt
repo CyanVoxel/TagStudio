@@ -9,3 +9,4 @@ ujson>=5.8.0,<=5.9.0
 rawpy==0.21.0
 pillow-heif==0.16.0
 chardet==5.2.0
+sqlalchemy==2.0.30
