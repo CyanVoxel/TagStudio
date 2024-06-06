@@ -5,16 +5,20 @@
 """A pagination widget created for TagStudio."""
 # I never want to see this code again.
 
-from PySide6.QtCore import QObject, Signal, QSize
+from PySide6.QtCore import QObject, QSize, Signal
 from PySide6.QtGui import QIntValidator
 from PySide6.QtWidgets import (
-    QWidget,
     QHBoxLayout,
-    QPushButton,
     QLabel,
     QLineEdit,
+    QPushButton,
     QSizePolicy,
+    QWidget,
 )
+
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 # class NumberEdit(QLineEdit):
@@ -419,7 +423,7 @@ class Pagination(QWidget, QObject):
         self.validator.setTop(page_count)
         # if self.current_page_index != index:
         if emit:
-            print(f"[PAGINATION] Emitting {index}")
+            logger.info(f"[PAGINATION] Emitting {index}")
             self.index.emit(index)
         self.current_page_index = index
         self.page_count = page_count
@@ -460,5 +464,5 @@ class Validator(QIntValidator):
     def fixup(self, input: str) -> str:
         # print(input)
         input = input.strip("0")
-        print(input)
+        logger.info(input)
         return super().fixup(str(self.top()) if input else "1")

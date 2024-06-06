@@ -3,31 +3,22 @@
 # Created for TagStudio: https://github.com/CyanVoxel/TagStudio
 
 
-import logging
 import math
 
-from PySide6.QtCore import Signal, Qt, QSize
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QLineEdit,
-    QScrollArea,
     QFrame,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
-
 from src.core.library import Library
 from src.core.palette import ColorType, get_tag_color
 from src.qt.widgets.panel import PanelWidget
 from src.qt.widgets.tag import TagWidget
-
-
-ERROR = f"[ERROR]"
-WARNING = f"[WARNING]"
-INFO = f"[INFO]"
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class TagSearchPanel(PanelWidget):
@@ -114,9 +105,9 @@ class TagSearchPanel(PanelWidget):
 
         for tag_id in found_tags:
             c = QWidget()
-            l = QHBoxLayout(c)
-            l.setContentsMargins(0, 0, 0, 0)
-            l.setSpacing(3)
+            layout = QHBoxLayout(c)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(3)
             tw = TagWidget(self.lib, self.lib.get_tag(tag_id), False, False)
             ab = QPushButton()
             ab.setMinimumSize(23, 23)
@@ -149,8 +140,8 @@ class TagSearchPanel(PanelWidget):
 
             ab.clicked.connect(lambda checked=False, x=tag_id: self.tag_chosen.emit(x))
 
-            l.addWidget(tw)
-            l.addWidget(ab)
+            layout.addWidget(tw)
+            layout.addWidget(ab)
             self.scroll_layout.addWidget(c)
 
         self.search_field.setFocus()

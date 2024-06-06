@@ -2,37 +2,18 @@
 # Licensed under the GPL-3.0 License.
 # Created for TagStudio: https://github.com/CyanVoxel/TagStudio
 
-import logging
 import os
-import traceback
 from pathlib import Path
 
 import cv2
 from PIL import Image, ImageChops, UnidentifiedImageError
 from PIL.Image import DecompressionBombError
-from PySide6.QtCore import (
-    QObject,
-    QThread,
-    Signal,
-    QRunnable,
-    Qt,
-    QThreadPool,
-    QSize,
-    QEvent,
-    QTimer,
-    QSettings,
-)
-
+from PySide6.QtCore import QObject, Signal
+from src.core.constants import DOC_TYPES, IMAGE_TYPES, VIDEO_TYPES
 from src.core.library import Library
-from src.core.constants import DOC_TYPES, VIDEO_TYPES, IMAGE_TYPES
+from src.core.logging import get_logger
 
-
-ERROR = f"[ERROR]"
-WARNING = f"[WARNING]"
-INFO = f"[INFO]"
-
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = get_logger(__name__)
 
 
 class CollageIconRenderer(QObject):
@@ -53,7 +34,7 @@ class CollageIconRenderer(QObject):
     ):
         entry = self.lib.get_entry(entry_id)
         filepath = self.lib.library_dir / entry.path / entry.filename
-        file_type = os.path.splitext(filepath)[1].lower()[1:]
+        # file_type = os.path.splitext(filepath)[1].lower()[1:]
         color: str = ""
 
         try:
@@ -88,8 +69,8 @@ class CollageIconRenderer(QObject):
                     # collage.paste(pic, (y*thumb_size, x*thumb_size))
                     self.rendered.emit(pic)
             if not data_only_mode:
-                logging.info(
-                    f"\r{INFO} Combining [ID:{entry_id}/{len(self.lib.entries)}]: {self.get_file_color(filepath.suffix.lower())}{entry.path}{os.sep}{entry.filename}\033[0m"
+                logger.info(
+                    f"\rCombining [ID:{entry_id}/{len(self.lib.entries)}]: {self.get_file_color(filepath.suffix.lower())}{entry.path}{os.sep}{entry.filename}\033[0m"
                 )
                 # sys.stdout.write(f'\r{INFO} Combining [{i+1}/{len(self.lib.entries)}]: {self.get_file_color(file_type)}{entry.path}{os.sep}{entry.filename}{RESET}')
                 # sys.stdout.flush()
@@ -110,7 +91,7 @@ class CollageIconRenderer(QObject):
                             # collage.paste(pic, (y*thumb_size, x*thumb_size))
                             self.rendered.emit(pic)
                     except DecompressionBombError as e:
-                        logging.info(f"[ERROR] One of the images was too big ({e})")
+                        logger.error(f"One of the images was too big ({e})")
                 elif filepath.suffix.lower() in VIDEO_TYPES:
                     video = cv2.VideoCapture(str(filepath))
                     video.set(
@@ -137,9 +118,7 @@ class CollageIconRenderer(QObject):
                         # collage.paste(pic, (y*thumb_size, x*thumb_size))
                         self.rendered.emit(pic)
         except (UnidentifiedImageError, FileNotFoundError):
-            logging.info(
-                f"\n{ERROR} Couldn't read {entry.path}{os.sep}{entry.filename}"
-            )
+            logger.error(f"\nCouldn't read {entry.path}{os.sep}{entry.filename}")
             with Image.open(
                 str(
                     Path(__file__).parents[2]
@@ -154,18 +133,16 @@ class CollageIconRenderer(QObject):
                 self.rendered.emit(pic)
         except KeyboardInterrupt:
             # self.quit(save=False, backup=True)
-            run = False
             # clear()
-            logging.info("\n")
-            logging.info(f"{INFO} Collage operation cancelled.")
-            clear_scr = False
-        except:
-            logging.info(f"{ERROR} {entry.path}{os.sep}{entry.filename}")
-            traceback.print_exc()
-            logging.info("Continuing...")
+            logger.info("\n")
+            logger.info("Collage operation cancelled.")
+        except Exception:
+            logger.exception(f"{entry.path}{os.sep}{entry.filename}")
+
+            logger.info("Continuing...")
 
         self.done.emit()
-        # logging.info('Done!')
+        # logger.info('Done!')
 
     def get_file_color(self, ext: str):
         if ext.lower().replace(".", "", 1) == "gif":

@@ -3,7 +3,6 @@
 # Created for TagStudio: https://github.com/CyanVoxel/TagStudio
 
 
-import os
 import typing
 
 from PySide6.QtCore import Qt
@@ -32,7 +31,7 @@ class FixDupeFilesModal(QWidget):
         self.driver = driver
         self.count = -1
         self.filename = ""
-        self.setWindowTitle(f"Fix Duplicate Files")
+        self.setWindowTitle("Fix Duplicate Files")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setMinimumSize(400, 300)
         self.root_layout = QVBoxLayout(self)
@@ -162,7 +161,7 @@ class FixDupeFilesModal(QWidget):
         self.count = count
         if self.count < 0:
             self.mirror_button.setDisabled(True)
-            self.dupe_count.setText(f"Duplicate File Matches: N/A")
+            self.dupe_count.setText("Duplicate File Matches: N/A")
         elif self.count == 0:
             self.mirror_button.setDisabled(True)
             self.dupe_count.setText(f"Duplicate File Matches: {count}")

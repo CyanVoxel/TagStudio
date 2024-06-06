@@ -3,22 +3,21 @@
 # Created for TagStudio: https://github.com/CyanVoxel/TagStudio
 
 
-import logging
 import math
 import typing
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QScrollArea,
-    QFrame,
+    QVBoxLayout,
+    QWidget,
 )
-
 from src.core.library import Library, Tag
+from src.core.logging import get_logger
 from src.core.palette import ColorType, get_tag_color
 from src.qt.flowlayout import FlowLayout
 
@@ -26,16 +25,11 @@ from src.qt.flowlayout import FlowLayout
 if typing.TYPE_CHECKING:
     from src.qt.ts_qt import QtDriver
 
-
-ERROR = f"[ERROR]"
-WARNING = f"[WARNING]"
-INFO = f"[INFO]"
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = get_logger(__name__)
 
 
 def folders_to_tags(library: Library):
-    logging.info("Converting folders to Tags")
+    logger.info("Converting folders to Tags")
     tree: dict = dict(dirs={})
 
     def add_tag_to_tree(items: list[Tag]):
@@ -75,11 +69,11 @@ def folders_to_tags(library: Library):
             if not entry.has_tag(library, tag.id):
                 entry.add_tag(library, tag.id, 6)
 
-    logging.info("Done")
+    logger.info("Done")
 
 
 def reverse_tag(library: Library, tag: Tag, list: list[Tag]) -> list[Tag]:
-    if list != None:
+    if list is not None:
         list.append(tag)
     else:
         list = [tag]
@@ -144,7 +138,7 @@ def generate_preview_data(library: Library):
             if cut:
                 branch["dirs"].pop(folder)
 
-        if not "tag" in branch:
+        if "tag" not in branch:
             return
         if branch["tag"].id == -1 or len(branch["files"]) > 0:  # Needs to be first
             return False
@@ -165,7 +159,7 @@ class FoldersToTagsModal(QWidget):
         self.count = -1
         self.filename = ""
 
-        self.setWindowTitle(f"Create Tags From Folders")
+        self.setWindowTitle("Create Tags From Folders")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setMinimumSize(640, 640)
         self.root_layout = QVBoxLayout(self)
@@ -321,7 +315,7 @@ class ModifiedTagWidget(
 
         self.bg_button = QPushButton(self)
         self.bg_button.setFlat(True)
-        if parentTag != None:
+        if parentTag is not None:
             text = f"{tag.name} ({parentTag.name})".replace("&", "&&")
         else:
             text = tag.name.replace("&", "&&")

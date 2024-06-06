@@ -4,10 +4,9 @@
 
 
 import math
-import os
 from types import FunctionType, MethodType
 from pathlib import Path
-from typing import Optional, cast, Callable, Any
+from typing import Optional, cast, Callable
 
 from PIL import Image, ImageQt
 from PySide6.QtCore import Qt, QEvent

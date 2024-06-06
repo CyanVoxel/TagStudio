@@ -25,7 +25,7 @@ class AddFieldModal(QWidget):
         # [Cancel] [Save]
         super().__init__()
         self.lib = library
-        self.setWindowTitle(f"Add Field")
+        self.setWindowTitle("Add Field")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setMinimumSize(400, 300)
         self.root_layout = QVBoxLayout(self)

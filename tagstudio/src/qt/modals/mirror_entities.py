@@ -34,7 +34,7 @@ class MirrorEntriesModal(QWidget):
         super().__init__()
         self.lib = library
         self.driver = driver
-        self.setWindowTitle(f"Mirror Entries")
+        self.setWindowTitle("Mirror Entries")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setMinimumSize(500, 400)
         self.root_layout = QVBoxLayout(self)
