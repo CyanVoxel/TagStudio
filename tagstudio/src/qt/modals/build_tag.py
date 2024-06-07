@@ -126,10 +126,10 @@ class BuildTagPanel(PanelWidget):
         self.subtags_add_button.clicked.connect(
             lambda: (
                 tsp.update_tags(
-                    current_tags=(self.tag.subtag_ids if self.tag else None)
+                    current_tags=(self.tag.subtag_ids if self.tag else None) # type: ignore[attr-defined]
                 ),
                 self.add_tag_modal.show(),
-            )  # type: ignore
+            )
         )
         self.subtags_layout.addWidget(self.subtags_add_button)
 
