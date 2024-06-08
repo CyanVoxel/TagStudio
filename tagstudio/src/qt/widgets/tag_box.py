@@ -75,10 +75,10 @@ class TagBoxWidget(FieldWidget):
             f"}}"
         )
         tsp = TagSearchPanel(self.lib)
-        tsp.tag_chosen.connect(lambda x: self.add_tag_callback(x))
+        tsp.tag_chosen.connect(lambda x, checked: self.update_tag_callback(x, checked))
         self.add_modal = PanelModal(tsp, title, "Add Tags")
         self.add_button.clicked.connect(
-            lambda: (tsp.update_tags(), self.add_modal.show())  # type: ignore
+            lambda: (tsp.update_tags(current_tags=self.tags), self.add_modal.show())  # type: ignore
         )
 
         self.set_tags(tags)
@@ -126,6 +126,9 @@ class TagBoxWidget(FieldWidget):
         if self.base_layout.itemAt(0) and not self.base_layout.itemAt(1):
             self.base_layout.update()
 
+    def edit_tag_callback(self, tag: Tag):
+        self.lib.update_tag(tag)
+
     def edit_tag(self, tag_id: int):
         btp = BuildTagPanel(self.lib, tag_id)
         # btp.on_edit.connect(lambda x: self.edit_tag_callback(x))
@@ -141,12 +144,18 @@ class TagBoxWidget(FieldWidget):
         # panel.tag_updated.connect(lambda tag: self.lib.update_tag(tag))
         self.edit_modal.show()
 
-    def add_tag_callback(self, tag_id):
+    def update_tag_callback(self, tag_id: int, checked: bool):
+        logging.info(
+            f"[TAG BOX WIDGET] UPDATE TAG CALLBACK: {'Add' if checked else 'Remove'} T:{tag_id} to E:{self.item.id}"
+        )
+        if checked:
+            self.add_tag(tag_id)
+        else:
+            self.remove_tag(tag_id)
+
+    def add_tag(self, tag_id: int):
         # self.base_layout.addWidget(TagWidget(self.lib, self.lib.get_tag(tag), True))
         # self.tags.append(tag)
-        logging.info(
-            f"[TAG BOX WIDGET] ADD TAG CALLBACK: T:{tag_id} to E:{self.item.id}"
-        )
         logging.info(f"[TAG BOX WIDGET] SELECTED T:{self.driver.selected}")
         id: int = list(self.field.keys())[0]  # type: ignore
         for x in self.driver.selected:
@@ -165,9 +174,6 @@ class TagBoxWidget(FieldWidget):
         # 	self.tags.append(tag_id)
         # self.set_tags(self.tags)
         # elif type((x[0]) == ThumbButton):
-
-    def edit_tag_callback(self, tag: Tag):
-        self.lib.update_tag(tag)
 
     def remove_tag(self, tag_id: int):
         logging.info(f"[TAG BOX WIDGET] SELECTED T:{self.driver.selected}")
