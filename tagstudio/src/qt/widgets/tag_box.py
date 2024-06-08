@@ -146,7 +146,7 @@ class TagBoxWidget(FieldWidget):
 
     def update_tag_callback(self, tag_id: int, checked: bool):
         logging.info(
-            f"[TAG BOX WIDGET] UPDATE TAG CALLBACK: {"Add" if checked else "Remove"} T:{tag_id} to E:{self.item.id}"
+            f"[TAG BOX WIDGET] UPDATE TAG CALLBACK: {'Add' if checked else 'Remove'} T:{tag_id} to E:{self.item.id}"
         )
         if checked:
             self.add_tag(tag_id)
