@@ -121,7 +121,10 @@ class TagSearchPanel(PanelWidget):
             l = QHBoxLayout(c)
             l.setContentsMargins(0, 0, 0, 0)
             l.setSpacing(3)
+
             tw = TagWidget(self.lib, self.lib.get_tag(tag_id), False, False)
+
+            tag_colors = self.lib.get_tag(tag_id).color
             ab = QPushButton()
             ab.setCheckable(True)
             ab.setMinimumSize(23, 23)
@@ -132,9 +135,9 @@ class TagSearchPanel(PanelWidget):
                 f"background: #d2d2d2;"
                 # f'background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {get_tag_color(ColorType.PRIMARY, tag.color)}, stop:1.0 {get_tag_color(ColorType.BORDER, tag.color)});'
                 # f"border-color:{get_tag_color(ColorType.PRIMARY, tag.color)};"
-                f"color: {get_tag_color(ColorType.BORDER, self.lib.get_tag(tag_id).color)};"
+                f"color: {get_tag_color(ColorType.BORDER, tag_colors)};"
                 f"font-weight: 600;"
-                f"border-color:{get_tag_color(ColorType.BORDER, self.lib.get_tag(tag_id).color)};"
+                f"border-color:{get_tag_color(ColorType.BORDER, tag_colors)};"
                 f"border-radius: 6px;"
                 f"border-style:solid;"
                 f"border-width: {math.ceil(1*self.devicePixelRatio())}px;"
@@ -145,17 +148,17 @@ class TagSearchPanel(PanelWidget):
                 f"font-size: 20px;"
                 f"}}"
                 f"QPushButton::checked{{"
-                f"border-color:{get_tag_color(ColorType.BORDER, self.lib.get_tag(tag_id).color)};"
-                f"color: {get_tag_color(ColorType.PRIMARY, self.lib.get_tag(tag_id).color)};"
-                f"background: {get_tag_color(ColorType.PRIMARY, self.lib.get_tag(tag_id).color)};"
+                f"border-color:{get_tag_color(ColorType.BORDER, tag_colors)};"
+                f"color: {get_tag_color(ColorType.PRIMARY, tag_colors)};"
+                f"background: {get_tag_color(ColorType.PRIMARY, tag_colors)};"
                 f"}}"
                 f"QPushButton::hover{{"
-                f"border-color:{get_tag_color(ColorType.LIGHT_ACCENT, self.lib.get_tag(tag_id).color)};"
-                f"color: {get_tag_color(ColorType.DARK_ACCENT, self.lib.get_tag(tag_id).color)};"
-                f"background: {get_tag_color(ColorType.LIGHT_ACCENT, self.lib.get_tag(tag_id).color)};"
+                f"border-color:{get_tag_color(ColorType.LIGHT_ACCENT, tag_colors)};"
+                f"color: {get_tag_color(ColorType.DARK_ACCENT, tag_colors)};"
+                f"background: {get_tag_color(ColorType.LIGHT_ACCENT, tag_colors)};"
                 f"}}"
                 f"QPushButton::checked:hover{{"
-                f"color: {get_tag_color(ColorType.LIGHT_ACCENT, self.lib.get_tag(tag_id).color)};"
+                f"color: {get_tag_color(ColorType.LIGHT_ACCENT, tag_colors)};"
                 f"}}"
             )
 
