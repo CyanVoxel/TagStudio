@@ -3,3 +3,4 @@ pre-commit==3.7.0
 pytest==8.2.0
 Pyinstaller==6.6.0
 mypy==1.10.0
+pytest-mock==3.14.0
