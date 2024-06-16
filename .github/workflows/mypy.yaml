@@ -19,14 +19,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
           # pyside 6.6.3 has some issue in their .pyi files
-          pip install PySide6==6.6.2
-          pip install -r requirements.txt
-          pip install mypy==1.10.0
+          pip install --no-cache-dir PySide6==6.6.2
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir mypy==1.10.0
           mkdir tagstudio/.mypy_cache
 
       - uses: tsuyoshicho/action-mypy@v4
