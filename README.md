@@ -108,7 +108,7 @@ Click the “+” button at the end of the Tags list, and search for tags to add
 
 ### Creating Tags
 
-To create a new tag, click on Edit -> New Tag from the menu bar. From there, enter a tag name, shorthand name, any tag aliases separated by newlines, any subtags, and an optional color.
+To create a new tag, click on Edit -> New Tag from the menu bar, or click Ctrl-T. From there, enter a tag name, shorthand name, any tag aliases separated by newlines, any subtags, and an optional color.
 
 - The tag **shorthand** is a type of alias that displays in situations when screen space is more valuable (ex. as a subtag for other tags).
 - **Aliases** are alternate names for a tag. These let you search for terms other than the exact tag name in order to find the tag again.
