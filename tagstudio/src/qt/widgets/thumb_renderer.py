@@ -28,8 +28,10 @@ from src.core.constants import (
     VIDEO_TYPES,
     IMAGE_TYPES,
     RAW_IMAGE_TYPES,
+    BLENDER_TYPES,
 )
 from src.core.utils.encoding import detect_char_encoding
+from src.qt.helpers.blender_thumbnailer import blend_thumb
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -204,6 +206,36 @@ class ThumbRenderer(QObject):
                 # 	img_buf = io.BytesIO()
                 # 	plt.savefig(img_buf, format='png')
                 # 	image = Image.open(img_buf)
+
+                # Blender ===========================================================
+                elif _filepath.suffix.lower() in BLENDER_TYPES:
+                    try:
+                        blend_image = blend_thumb(str(_filepath))
+
+                        bg = Image.new("RGB", blend_image.size, color="#1e1e1e")
+                        bg.paste(blend_image, mask=blend_image.getchannel(3))
+                        image = bg
+
+                    except (
+                        AttributeError,
+                        UnidentifiedImageError,
+                        FileNotFoundError,
+                        TypeError,
+                    ) as e:
+                        if str(e) == "expected string or buffer":
+                            logging.info(
+                                f"[ThumbRenderer]{ERROR} {_filepath.name} Doesn't have thumbnail saved. ({type(e).__name__})"
+                            )
+
+                        else:
+                            logging.info(
+                                f"[ThumbRenderer]{ERROR}: Couldn't render thumbnail for {_filepath.name} ({type(e).__name__})"
+                            )
+
+                        image = ThumbRenderer.thumb_file_default_512.resize(
+                            (adj_size, adj_size), resample=Image.Resampling.BILINEAR
+                        )
+
                 # No Rendered Thumbnail ========================================
                 else:
                     image = ThumbRenderer.thumb_file_default_512.resize(
