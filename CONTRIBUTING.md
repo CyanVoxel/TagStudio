@@ -64,10 +64,10 @@ _Learn more about setting up a virtual environment [here](https://docs.python.or
 
   - Run the "TagStudio.sh" script and the program should launch! (Make sure that the script is marked as executable if on Linux). Note that launching from the script from outside of a terminal will not launch a terminal window with any debug or crash information. If you wish to see this information, just launch the shell script directly from your terminal with `./TagStudio.sh`.
 
-  - **NixOS** (TagStudio.sh)
+  - **NixOS** (Nix Flake)
     > [!WARNING]
     > Support for NixOS is still a work in progress.
-    - Use the provided `flake.nix` file to create and enter a working environment by running `nix develop`. Then, run the `TagStudio.sh` script.
+    - Use the provided [Flake](https://nixos.wiki/wiki/Flakes) to create and enter a working environment by running `nix develop`. Then, run the program via `python3 tagstudio/tag_studio.py` from the root directory.
 
 - **Any** (No Scripts)
 
