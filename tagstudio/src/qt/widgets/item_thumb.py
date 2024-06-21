@@ -32,6 +32,7 @@ from src.core.constants import (
 )
 from src.qt.flowlayout import FlowWidget
 from src.qt.helpers.file_opener import FileOpenerHelper
+from src.qt.helpers.file_deleter import FileDeleterHelper
 from src.qt.widgets.thumb_renderer import ThumbRenderer
 from src.qt.widgets.thumb_button import ThumbButton
 
@@ -192,12 +193,16 @@ class ItemThumb(FlowWidget):
 
         self.thumb_button.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
         self.opener = FileOpenerHelper("")
+        self.deleter = FileDeleterHelper("")
         open_file_action = QAction("Open file", self)
         open_file_action.triggered.connect(self.opener.open_file)
         open_explorer_action = QAction("Open file in explorer", self)
         open_explorer_action.triggered.connect(self.opener.open_explorer)
+        delete_action = QAction("Delete", self)
+        delete_action.triggered.connect(self.deleter.delete_file)
         self.thumb_button.addAction(open_file_action)
         self.thumb_button.addAction(open_explorer_action)
+        self.thumb_button.addAction(delete_action)
 
         # Static Badges ========================================================
 
@@ -422,6 +427,8 @@ class ItemThumb(FlowWidget):
         entry = self.lib.get_entry(self.item_id)
         filepath = self.lib.library_dir / entry.path / entry.filename
         self.opener.set_filepath(filepath)
+        self.deleter.set_filepath(filepath)
+        self.deleter.set_delete_callback(self._on_delete)
 
     def assign_favorite(self, value: bool):
         # Switching mode to None to bypass mode-specific operations when the
@@ -499,3 +506,9 @@ class ItemThumb(FlowWidget):
         if self.panel.isOpen:
             self.panel.update_widgets()
         self.panel.driver.update_badges()
+
+    def _on_delete(self):
+        entry = self.lib.get_entry(self.item_id)
+        self.lib.remove_entry(self.item_id)
+        self.panel.driver.purge_item_from_navigation(entry.type, self.item_id)
+        self.panel.driver.filter_items()
