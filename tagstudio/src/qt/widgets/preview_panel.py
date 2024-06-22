@@ -79,8 +79,6 @@ class PreviewPanel(QWidget):
         self.image_ratio: float = 1.0
 
         self.image_container = QWidget()
-        image_layout = QHBoxLayout(self.image_container)
-        image_layout.setContentsMargins(0, 0, 0, 0)
 
         self.open_file_action = QAction("Open file", self)
         self.open_explorer_action = QAction("Open file in explorer", self)
@@ -111,6 +109,8 @@ class PreviewPanel(QWidget):
             )
         )
 
+        image_layout = QHBoxLayout(self.image_container)
+        image_layout.setContentsMargins(0, 0, 0, 0)
         image_layout.addWidget(self.preview_img)
         image_layout.setAlignment(self.preview_img, Qt.AlignmentFlag.AlignCenter)
         image_layout.addWidget(self.preview_vid)
@@ -150,11 +150,6 @@ class PreviewPanel(QWidget):
         scroll_container.setObjectName("entryScrollContainer")
         scroll_container.setLayout(self.scroll_layout)
 
-        info_section = QWidget()
-        info_layout = QVBoxLayout(info_section)
-        info_layout.setContentsMargins(0, 0, 0, 0)
-        info_layout.setSpacing(6)
-
         scroll_area = QScrollArea()
         scroll_area.setObjectName("entryScrollArea")
         scroll_area.setSizePolicy(
@@ -176,6 +171,15 @@ class PreviewPanel(QWidget):
         )
         scroll_area.setWidget(scroll_container)
 
+        self.info_section = QWidget()
+        self.info_section.setSizePolicy(
+            QSizePolicy.Preferred,  # type: ignore
+            QSizePolicy.Minimum,  # type: ignore
+        )
+
+        info_layout = QVBoxLayout(self.info_section)
+        info_layout.setContentsMargins(0, 0, 0, 0)
+        info_layout.setSpacing(6)
         info_layout.addWidget(self.file_label)
         info_layout.addWidget(self.dimensions_label)
         info_layout.addWidget(scroll_area)
@@ -197,9 +201,9 @@ class PreviewPanel(QWidget):
         if not self.driver.settings.value(
             SettingItems.WINDOW_SHOW_LIBS, True, type=bool
         ):
-            self.libs_flow_container.hide()
+            self.toggle_libs()
 
-        splitter = QSplitter()
+        self.splitter = splitter = QSplitter()
         splitter.setOrientation(Qt.Orientation.Vertical)
         splitter.setHandleWidth(12)
         splitter.splitterMoved.connect(
@@ -212,7 +216,7 @@ class PreviewPanel(QWidget):
         )
 
         splitter.addWidget(self.image_container)
-        splitter.addWidget(info_section)
+        splitter.addWidget(self.info_section)
         splitter.addWidget(self.libs_flow_container)
         splitter.setStretchFactor(1, 2)
 
@@ -235,6 +239,40 @@ class PreviewPanel(QWidget):
         root_layout = QHBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.addWidget(splitter)
+
+        self.add_sidebar_buttons(self.driver.main_window.horizontalLayout)
+
+    def toggle_thumbnail(self):
+        # TODO - skip rendering when hidden
+        self.image_container.setVisible(not self.image_container.isVisible())
+
+    def toggle_libs(self):
+        self.libs_flow_container.setVisible(not self.libs_flow_container.isVisible())
+
+    def toggle_props(self):
+        self.info_section.setVisible(not self.info_section.isVisible())
+
+    def add_sidebar_buttons(self, parent_layout: QHBoxLayout):
+        sidebar = QVBoxLayout()
+        sidebar.setContentsMargins(0, 0, 0, 0)
+        sidebar.setAlignment(Qt.AlignTop)  # type: ignore
+
+        sidebar_preview = QPushButton("🖼️")
+        sidebar_preview.setFixedWidth(32)
+        sidebar_preview.pressed.connect(self.toggle_thumbnail)
+        sidebar.addWidget(sidebar_preview)
+
+        sidebar_props = QPushButton("⚙️️")
+        sidebar_props.setFixedWidth(32)
+        sidebar_props.pressed.connect(self.toggle_props)
+        sidebar.addWidget(sidebar_props)
+
+        sidebar_libs = QPushButton("🗃️️")
+        sidebar_libs.setFixedWidth(32)
+        sidebar_libs.pressed.connect(self.toggle_libs)
+        sidebar.addWidget(sidebar_libs)
+
+        parent_layout.addLayout(sidebar)
 
     def fill_libs_widget(self, layout: QVBoxLayout):
         settings = self.driver.settings
