@@ -12,7 +12,7 @@ import cv2
 import rawpy
 from PIL import Image, UnidentifiedImageError
 from PIL.Image import DecompressionBombError
-from PySide6.QtCore import Signal, Qt, QSize
+from PySide6.QtCore import QModelIndex, Signal, Qt, QSize
 from PySide6.QtGui import QResizeEvent, QAction
 from PySide6.QtWidgets import (
     QWidget,
@@ -426,13 +426,13 @@ class PreviewPanel(QWidget):
         self.afm.is_connected = True
         self.add_field_button.clicked.connect(self.afm.show)
 
-    def add_field_to_selected(self, field_id: int):
-        """Adds an entry field to one or more selected items."""
-        added = set()
-        for item_pair in self.selected:
-            if item_pair[0] == ItemType.ENTRY and item_pair[1] not in added:
-                self.lib.add_field_to_entry(item_pair[1], field_id)
-                added.add(item_pair[1])
+    def add_field_to_selected(self, field_list: list[QModelIndex]):
+        """Add list of entry fields to one or more selected items."""
+        for item_type, item_id in self.selected:
+            if item_type != ItemType.ENTRY:
+                continue
+            for field_item in field_list:
+                self.lib.add_field_to_entry(item_id, field_item.row())
 
     # def update_widgets(self, item: Union[Entry, Collation, Tag]):
     def update_widgets(self):
