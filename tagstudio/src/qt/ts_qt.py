@@ -158,7 +158,7 @@ class Consumer(QThread):
 
 class QtDriver(QObject):
     """A Qt GUI frontend driver for TagStudio."""
-
+    cur_qry: None = None | str,
     SIGTERM = Signal()
 
     preview_panel: PreviewPanel
@@ -564,11 +564,11 @@ class QtDriver(QObject):
 
         search_button: QPushButton = self.main_window.searchButton
         search_button.clicked.connect(
-            lambda: self.filter_items(self.main_window.searchField.text())
+            lambda: self.filter_items(self.main_window.searchField.text(),False) # False as a parameter cancels default 'redundant search' override in filter_items()
         )
         search_field: QLineEdit = self.main_window.searchField
         search_field.returnPressed.connect(
-            lambda: self.filter_items(self.main_window.searchField.text())
+            lambda: self.filter_items(self.main_window.searchField.text(),False) # False as a parameter cancels default 'redundant search' override in filter_items()
         )
         search_type_selector: QComboBox = self.main_window.comboBox_2
         search_type_selector.currentIndexChanged.connect(
@@ -1347,58 +1347,60 @@ class QtDriver(QObject):
             index,
             len(self.frame_dict[query]),
         )
-
-    def filter_items(self, query: str = ""):
+    
+    def filter_items(self, query: str = "", override: bool = True):
         if self.lib:
-            # logging.info('Filtering...')
-            self.main_window.statusbar.showMessage(
-                f'Searching Library for "{query}"...'
-            )
-            self.main_window.statusbar.repaint()
-            start_time = time.time()
-
-            # self.filtered_items = self.lib.search_library(query)
-            # 73601 Entries at 500 size should be 246
-            all_items = self.lib.search_library(query, search_mode=self.search_mode)
-            frames: list[list[tuple[ItemType, int]]] = []
-            frame_count = math.ceil(len(all_items) / self.max_results)
-            for i in range(0, frame_count):
-                frames.append(
-                    all_items[
-                        min(len(all_items) - 1, (i) * self.max_results) : min(
-                            len(all_items), (i + 1) * self.max_results
-                        )
-                    ]
-                )
-            for i, f in enumerate(frames):
-                logging.info(f"Query:{query}, Frame: {i},  Length: {len(f)}")
-            self.frame_dict[query] = frames
-            # self.frame_dict[query] = [all_items]
-
-            if self.cur_query == query:
-                # self.refresh_frame(self.lib.search_library(query))
-                # NOTE: Trying to refresh instead of navigating forward here
-                # now creates a bug when the page counts differ on refresh.
-                # If refreshing is absolutely desired, see how to update
-                # page counts where they need to be updated.
-                self.nav_forward(*self.get_frame_contents(0, query))
-            else:
-                # self.nav_forward(self.lib.search_library(query))
-                self.nav_forward(*self.get_frame_contents(0, query))
-            self.cur_query = query
-
-            end_time = time.time()
-            if query:
+            if(override or (not (self.cur_qry == query))):        
+                self.cur_qry = query
+                # logging.info('Filtering...')
                 self.main_window.statusbar.showMessage(
-                    f'{len(all_items)} Results Found for "{query}" ({format_timespan(end_time - start_time)})'
+                    f'Searching Library for "{query}"...'
                 )
-            else:
-                self.main_window.statusbar.showMessage(
-                    f"{len(all_items)} Results ({format_timespan(end_time - start_time)})"
-                )
-            # logging.info(f'Done Filtering! ({(end_time - start_time):.3f}) seconds')
+                self.main_window.statusbar.repaint()
+                start_time = time.time()
 
-            # self.update_thumbs()
+                # self.filtered_items = self.lib.search_library(query)
+                # 73601 Entries at 500 size should be 246
+                all_items = self.lib.search_library(query)
+                frames: list[list[tuple[ItemType, int]]] = []
+                frame_count = math.ceil(len(all_items) / self.max_results)
+                for i in range(0, frame_count):
+                    frames.append(
+                        all_items[
+                            min(len(all_items) - 1, (i) * self.max_results) : min(
+                                len(all_items), (i + 1) * self.max_results
+                            )
+                        ]
+                    )
+                for i, f in enumerate(frames):
+                    logging.info(f"Query:{query}, Frame: {i},  Length: {len(f)}")
+                self.frame_dict[query] = frames
+                # self.frame_dict[query] = [all_items]
+
+                if self.cur_query == query:
+                    # self.refresh_frame(self.lib.search_library(query))
+                    # NOTE: Trying to refresh instead of navigating forward here
+                    # now creates a bug when the page counts differ on refresh.
+                    # If refreshing is absolutely desired, see how to update
+                    # page counts where they need to be updated.
+                    self.nav_forward(*self.get_frame_contents(0, query))
+                else:
+                    # self.nav_forward(self.lib.search_library(query))
+                    self.nav_forward(*self.get_frame_contents(0, query))
+                self.cur_query = query
+
+                end_time = time.time()
+                if query:
+                    self.main_window.statusbar.showMessage(
+                        f'{len(all_items)} Results Found for "{query}" ({format_timespan(end_time - start_time)})'
+                    )
+                else:
+                    self.main_window.statusbar.showMessage(
+                        f"{len(all_items)} Results ({format_timespan(end_time - start_time)})"
+                    )
+                # logging.info(f'Done Filtering! ({(end_time - start_time):.3f}) seconds')
+
+                # self.update_thumbs()
 
     def set_search_type(self, mode=SearchMode.AND):
         self.search_mode = mode
