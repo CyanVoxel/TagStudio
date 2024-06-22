@@ -5,6 +5,7 @@
 
 import logging
 import math
+import random
 
 from PySide6.QtCore import Signal, Qt, QSize
 from PySide6.QtWidgets import (
@@ -17,8 +18,9 @@ from PySide6.QtWidgets import (
     QFrame,
 )
 
-from src.core.library import Library
+from src.core.library import Library, Tag
 from src.core.palette import ColorType, get_tag_color
+from src.core.constants import TAG_COLORS
 from src.qt.widgets.panel import PanelWidget
 from src.qt.widgets.tag import TagWidget
 
@@ -96,8 +98,10 @@ class TagSearchPanel(PanelWidget):
             self.tag_chosen.emit(self.first_tag_id)
             self.search_field.setText("")
             self.update_tags()
+        elif text:
+            self.create_tag(text)
+            self.parentWidget().hide()
         else:
-            self.search_field.setFocus()
             self.parentWidget().hide()
 
     def update_tags(self, query: str = ""):
@@ -151,6 +155,73 @@ class TagSearchPanel(PanelWidget):
             l.addWidget(ab)
             self.scroll_layout.addWidget(c)
 
+        # Add a create tag button if a query is entered
+        if query:
+            c = self.create_tag_button(query)
+            self.scroll_layout.addWidget(c)
+
+        self.search_field.setFocus()
+
+    def create_tag_button(self, query: str):
+        # Construct the create tag button
+        c = QWidget()
+        l = QHBoxLayout(c)
+        l.setContentsMargins(0, 0, 0, 0)
+        l.setSpacing(3)
+
+        create_button = QPushButton(self)
+        create_button.setFlat(True)
+        create_button.setText(f"Create \"{query.replace("&", "&&")}\"")
+
+        inner_layout = QHBoxLayout()
+        inner_layout.setObjectName("innerLayout")
+        inner_layout.setContentsMargins(2, 2, 2, 2)
+        create_button.setLayout(inner_layout)
+        create_button.setMinimumSize(math.ceil(22 * 1.5), 22)
+
+        create_button.setStyleSheet(
+            f"QPushButton{{"
+            f"background: {get_tag_color(ColorType.PRIMARY, "dark gray")};"
+            f"color: {get_tag_color(ColorType.TEXT, "dark gray")};"
+            f"font-weight: 600;"
+            f"border-color:{get_tag_color(ColorType.BORDER, "dark gray")};"
+            f"border-radius: 6px;"
+            f"border-style:solid;"
+            f"border-width: {math.ceil(1*self.devicePixelRatio())}px;"
+            f"padding-right: 4px;"
+            f"padding-bottom: 1px;"
+            f"padding-left: 4px;"
+            f"font-size: 13px"
+            f"}}"
+            f"QPushButton::hover{{"
+            f"border-color:{get_tag_color(ColorType.LIGHT_ACCENT, "dark gray")};"
+            f"}}"
+        )
+
+        create_button.clicked.connect(lambda x=query: self.create_tag(query))
+        l.addWidget(create_button)
+
+        return c
+
+    def create_tag(self, query: str):
+        # Fuction called when tag should be created based on query
+        # Creates the tag and applies it to the document
+        new_tag: Tag = Tag(
+            id=-2,
+            name=query,
+            shorthand=query,
+            aliases=[],
+            subtags_ids=[],
+            color=random.sample(TAG_COLORS, 1)[0],
+        )
+
+        new_id = self.lib.add_tag_to_library(new_tag)
+        self.update_tags(query)
+        self.tag_chosen.emit(new_id)
+
+    def showEvent(self, event):
+        # Clear search field and focus when showing modal
+        self.search_field.setText("")
         self.search_field.setFocus()
 
     # def enterEvent(self, event: QEnterEvent) -> None:
