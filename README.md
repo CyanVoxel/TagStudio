@@ -41,6 +41,13 @@ TagStudio is a photo & file organization application with an underlying system t
 3. **The application.** If nothing else, TagStudio the application serves as the first (and so far only) implementation for this system of metadata management. This has the responsibility of doing the idea justice and showing just what’s possible when it comes to user file management.
 4. (The name.) I think it’s fine for an app or client, but it doesn’t really make sense for a system or standard. I suppose this will evolve with time.
 
+## Tech-Stack
+- 
+- 
+-
+-
+-
+
 ## Current Features
 
 - Create libraries/vaults centered around a system directory. Libraries contain a series of entries: the representations of your files combined with metadata fields. Each entry represents a file in your library’s directory, and is linked to its location.
