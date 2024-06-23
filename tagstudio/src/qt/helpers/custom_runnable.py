@@ -7,7 +7,7 @@ from PySide6.QtCore import Signal, QRunnable, QObject
 
 
 class CustomRunnable(QRunnable, QObject):
-    done = Signal()
+    done = Signal(object)
 
     def __init__(self, function) -> None:
         QRunnable.__init__(self)
@@ -15,5 +15,5 @@ class CustomRunnable(QRunnable, QObject):
         self.function = function
 
     def run(self):
-        self.function()
-        self.done.emit()
+        result = self.function()
+        self.done.emit(result)

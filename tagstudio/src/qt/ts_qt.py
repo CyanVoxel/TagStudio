@@ -160,6 +160,7 @@ class QtDriver(QObject):
     """A Qt GUI frontend driver for TagStudio."""
 
     SIGTERM = Signal()
+    new_files_added = Signal()
 
     preview_panel: PreviewPanel
 
@@ -187,6 +188,8 @@ class QtDriver(QObject):
         self.thumb_cutoff: float = time.time()
         # self.selected: list[tuple[int,int]] = [] # (Thumb Index, Page Index)
         self.selected: list[tuple[ItemType, int]] = []  # (Item Type, Item ID)
+
+        self.loading_library = False
 
         self.SIGTERM.connect(self.handleSIGTERM)
 
@@ -588,6 +591,7 @@ class QtDriver(QObject):
         self.main_window.show()
         self.main_window.activateWindow()
         self.main_window.toggle_landing_page(True)
+        logging.info("Showing main window...")
 
         self.frame_dict = {}
         self.main_window.pagination.index.connect(
@@ -834,26 +838,14 @@ class QtDriver(QObject):
         Threaded method that adds any known new files to the library and
         initiates running default macros on them.
         """
-        # logging.info(f'Start ANF: {QThread.currentThread()}')
-        new_ids: list[int] = self.lib.add_new_files_as_entries()
-        # pb = QProgressDialog(f'Running Configured Macros on 1/{len(new_ids)} New Entries', None, 0,len(new_ids))
-        # pb.setFixedSize(432, 112)
-        # pb.setWindowFlags(pb.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
-        # pb.setWindowTitle('Running Macros')
-        # pb.setWindowModality(Qt.WindowModality.ApplicationModal)
-        # pb.show()
+        r = CustomRunnable(self.lib.add_new_files_as_entries)
+        r.done.connect(lambda new_ids: self.new_file_macros_runnable(new_ids))
+        QThreadPool.globalInstance().start(r)
 
-        # r = CustomRunnable(lambda: self.new_file_macros_runnable(pb, new_ids))
-        # r.done.connect(lambda: (pb.hide(), pb.deleteLater(), self.filter_items('')))
-        # r.run()
-        # # QThreadPool.globalInstance().start(r)
-
-        # # logging.info(f'{INFO} Running configured Macros on {len(new_ids)} new Entries...')
-        # # self.main_window.statusbar.showMessage(f'Running configured Macros on {len(new_ids)} new Entries...', 3)
-
-        # # pb.hide()
-
-        iterator = FunctionIterator(lambda: self.new_file_macros_runnable(new_ids))
+    def new_file_macros_runnable(self, new_ids):
+        """Threaded method that runs macros on a set of Entry IDs."""
+        # Run default macro on each new id
+        iterator = FunctionIterator(lambda: self.run_default_macros(new_ids))
         pw = ProgressWidget(
             window_title="Running Macros on New Entries",
             label_text=f"Running Configured Macros on 1/{len(new_ids)} New Entries",
@@ -869,11 +861,18 @@ class QtDriver(QObject):
             )
         )
         r = CustomRunnable(lambda: iterator.run())
-        r.done.connect(lambda: (pw.hide(), pw.deleteLater(), self.filter_items("")))
+        r.done.connect(
+            lambda: (
+                pw.hide(),
+                pw.deleteLater(),
+                self.filter_items(""),
+                self.new_files_added.emit(),
+            )
+        )
         QThreadPool.globalInstance().start(r)
 
-    def new_file_macros_runnable(self, new_ids):
-        """Threaded method that runs macros on a set of Entry IDs."""
+    def run_default_macros(self, new_ids):
+        """Runs the default Macro on newly created entries."""
         # sleep(1)
         # logging.info(f'ANFR: {QThread.currentThread()}')
         # for i, id in enumerate(new_ids):
@@ -1439,26 +1438,44 @@ class QtDriver(QObject):
 
     def open_library(self, path: Path):
         """Opens a TagStudio library."""
+        # Prevents attemping to load a new library while another is already loading.
+        if self.loading_library:
+            return
+
         open_message: str = f'Opening Library "{str(path)}"...'
+        logging.info(open_message)
         self.main_window.landing_widget.set_status_label(open_message)
         self.main_window.statusbar.showMessage(open_message, 3)
         self.main_window.repaint()
+
+        self.loaded_library_path = path
+        self.loading_library = True
 
         if self.lib.library_dir:
             self.save_library()
             self.lib.clear_internal_vars()
 
-        return_code = self.lib.open_library(path)
+        r = CustomRunnable(lambda: self.lib.open_library(path))
+        r.done.connect(lambda return_code: self.library_load_callback(return_code))
+        QThreadPool.globalInstance().start(r)
+
+    def library_load_callback(self, return_code: int):
+        """Handles the result of trying to load the library."""
         if return_code == 1:
-            pass
+            logging.info(f"Succesfully loaded Library")
+            self.display_initial_library_load()
         else:
             logging.info(
-                f"{ERROR} No existing TagStudio library found at '{path}'. Creating one."
+                f"{ERROR} No existing TagStudio library found at '{self.loaded_library_path}'. Creating one."
             )
-            print(f"Library Creation Return Code: {self.lib.create_library(path)}")
+            return_code = self.lib.create_library(self.loaded_library_path)
+            logging.info(f"Library Creation Return Code: {return_code}")
             self.add_new_files_callback()
+            self.new_files_added.connect(self.display_initial_library_load)
 
-        self.update_libs_list(path)
+    def display_initial_library_load(self):
+        """Displays the newly loaded library."""
+        self.update_libs_list(self.loaded_library_path)
         title_text = f"{self.base_title} - Library '{self.lib.library_dir}'"
         self.main_window.setWindowTitle(title_text)
 
@@ -1469,6 +1486,10 @@ class QtDriver(QObject):
         self.preview_panel.update_widgets()
         self.filter_items()
         self.main_window.toggle_landing_page(False)
+
+        self.loading_library = False
+        # Disconnect from the signal in order to no be called during "Refresh Dir" action
+        self.new_files_added.disconnect(self.display_initial_library_load)
 
     def create_collage(self) -> None:
         """Generates and saves an image collage based on Library Entries."""
