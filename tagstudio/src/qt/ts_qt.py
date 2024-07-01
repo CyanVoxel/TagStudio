@@ -55,7 +55,7 @@ from PySide6.QtWidgets import (
 )
 from humanfriendly import format_timespan
 
-from src.core.enums import SettingItems, SearchMode
+from src.core.enums import FieldID, SettingItems, SearchMode
 from src.core.library import ItemType
 from src.core.ts_core import TagStudioCore
 from src.core.constants import (
@@ -85,6 +85,7 @@ from src.qt.modals.file_extension import FileExtensionModal
 from src.qt.modals.fix_unlinked import FixUnlinkedEntriesModal
 from src.qt.modals.fix_dupes import FixDupeFilesModal
 from src.qt.modals.folders_to_tags import FoldersToTagsModal
+from src.qt.modals.tag_search import TagSearchPanel
 
 # this import has side-effect of import PySide resources
 import src.qt.resources_rc  # pylint: disable=unused-import
@@ -383,6 +384,20 @@ class QtDriver(QObject):
         )
         new_tag_action.setToolTip("Ctrl+T")
         edit_menu.addAction(new_tag_action)
+
+        add_tag_action = QAction("Add Tag To File", menu_bar)
+        add_tag_action.triggered.connect(lambda: self.attach_tag_action_callback())
+        add_tag_action.setShortcut(
+            QtCore.QKeyCombination(
+                QtCore.Qt.KeyboardModifier(
+                    QtCore.Qt.KeyboardModifier.ControlModifier
+                    | QtCore.Qt.KeyboardModifier.ShiftModifier
+                ),
+                QtCore.Qt.Key.Key_T,
+            )
+        )
+        new_tag_action.setToolTip("Ctrl+Shift+T")
+        edit_menu.addAction(add_tag_action)
 
         edit_menu.addSeparator()
 
@@ -723,6 +738,24 @@ class QtDriver(QObject):
         )
         # panel.tag_updated.connect(lambda tag: self.lib.update_tag(tag))
         self.modal.show()
+
+    def attach_tag_action_callback(self):
+        selected_files = [x[1] for x in self.selected if x[0] == ItemType.ENTRY]
+        tsp = TagSearchPanel(self.lib)
+        tsp.tag_chosen.connect(lambda x: self.bulk_add_tags(x, selected_files))
+        self.modal = PanelModal(tsp, "Bulk add tags (Tag Box)", "Add Tags")
+        tsp.update_tags()
+        self.modal.show()
+
+    def bulk_add_tags(self, tag_id: int, files: list[int]):
+        for x in files:
+            # Hardcoded because the shortcut works for just the normal tags
+            self.lib.get_entry(x).add_tag(self.lib, tag_id, field_id=FieldID.TAGS)
+
+        self.preview_panel.update_widgets()
+
+        if tag_id in (TAG_FAVORITE, TAG_ARCHIVED):
+            self.update_badges()
 
     def select_all_action_callback(self):
         for item in self.item_thumbs:
